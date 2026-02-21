@@ -21,7 +21,7 @@ import {
   FiBarChart2, FiPercent, FiCheck, FiLoader, FiClock,
   FiImage, FiFilm, FiLayers,
   FiZap, FiActivity, FiTarget, FiSend,
-  FiDollarSign, FiEye, FiHash
+  FiDollarSign, FiEye, FiHash, FiSave, FiXCircle
 } from 'react-icons/fi'
 
 // ─── Constants ──────────────────────────────────────────────────────
@@ -646,6 +646,7 @@ function AgentStatus({ isActive }: { isActive: boolean }) {
 
 // ─── LocalStorage Helpers ────────────────────────────────────────────
 const STORAGE_KEY = 'therma_calendar_form_state'
+const CALENDAR_STORAGE_KEY = 'therma_calendar_data'
 
 interface FormState {
   selectedMonth: string
@@ -655,6 +656,19 @@ interface FormState {
   heroOffer: string
   postingFrequency: number
   promotions: Promotion[]
+}
+
+interface SavedCalendar {
+  data: CalendarData
+  savedAt: string
+  configSnapshot: {
+    month: string
+    year: number
+    market: string
+    goal: string
+    heroOffer: string
+    frequency: number
+  }
 }
 
 function loadFormState(): Partial<FormState> {
@@ -677,6 +691,44 @@ function saveFormState(state: FormState) {
   }
 }
 
+function loadCalendarData(): SavedCalendar | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = localStorage.getItem(CALENDAR_STORAGE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    if (parsed?.data?.summary && Array.isArray(parsed?.data?.weeks)) {
+      return parsed as SavedCalendar
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
+function saveCalendarData(data: CalendarData, config: SavedCalendar['configSnapshot']) {
+  if (typeof window === 'undefined') return
+  try {
+    const toSave: SavedCalendar = {
+      data,
+      savedAt: new Date().toISOString(),
+      configSnapshot: config,
+    }
+    localStorage.setItem(CALENDAR_STORAGE_KEY, JSON.stringify(toSave))
+  } catch {
+    // Storage full or unavailable -- silently ignore
+  }
+}
+
+function clearCalendarData() {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.removeItem(CALENDAR_STORAGE_KEY)
+  } catch {
+    // ignore
+  }
+}
+
 // ─── Main Page Component ────────────────────────────────────────────
 export default function Page() {
   // Load persisted state once on mount
@@ -693,13 +745,17 @@ export default function Page() {
     Array.isArray(initialState.current.promotions) ? initialState.current.promotions : []
   )
 
+  // Load saved calendar on mount
+  const savedCalendar = useRef<SavedCalendar | null>(loadCalendarData())
+
   // App state
-  const [calendarData, setCalendarData] = useState<CalendarData | null>(null)
+  const [calendarData, setCalendarData] = useState<CalendarData | null>(savedCalendar.current?.data ?? null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [regeneratingWeek, setRegeneratingWeek] = useState<number | null>(null)
   const [showSampleData, setShowSampleData] = useState(false)
   const [activeAgentId, setActiveAgentId] = useState<string | null>(null)
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(savedCalendar.current?.savedAt ?? null)
 
   // Persist form state to localStorage on every change
   useEffect(() => {
@@ -713,6 +769,29 @@ export default function Page() {
       promotions,
     })
   }, [selectedMonth, selectedYear, targetMarket, primaryGoal, heroOffer, postingFrequency, promotions])
+
+  // Persist calendar data to localStorage whenever it changes
+  useEffect(() => {
+    if (calendarData) {
+      const config = {
+        month: selectedMonth,
+        year: selectedYear,
+        market: targetMarket,
+        goal: primaryGoal,
+        heroOffer,
+        frequency: postingFrequency,
+      }
+      saveCalendarData(calendarData, config)
+      setLastSavedAt(new Date().toISOString())
+    }
+  }, [calendarData, selectedMonth, selectedYear, targetMarket, primaryGoal, heroOffer, postingFrequency])
+
+  // Clear saved calendar
+  const handleClearCalendar = useCallback(() => {
+    setCalendarData(null)
+    setLastSavedAt(null)
+    clearCalendarData()
+  }, [])
 
   // Promotion management
   const addPromotion = () => {
@@ -1039,6 +1118,16 @@ Return ONLY the regenerated week in the same JSON format with weekNumber, dateRa
           {/* Right Panel - Calendar Output */}
           <main className="flex-1 overflow-y-auto">
             <div className="p-6 max-w-[1200px] mx-auto">
+              {/* Restored from saved indicator */}
+              {!loading && calendarData && savedCalendar.current && !error && lastSavedAt === savedCalendar.current.savedAt && (
+                <div className="flex items-center gap-2 bg-emerald-50/70 backdrop-blur-sm border border-emerald-200/60 rounded-xl px-4 py-2.5 mb-4">
+                  <FiSave className="h-3.5 w-3.5 text-emerald-600" />
+                  <span className="text-xs text-emerald-700">
+                    Calendar restored from your last session ({savedCalendar.current.configSnapshot.month} {savedCalendar.current.configSnapshot.year})
+                  </span>
+                </div>
+              )}
+
               {/* Error State */}
               {error && !loading && (
                 <div className="bg-red-50/80 backdrop-blur-sm border border-red-200 rounded-xl p-5 mb-6">
@@ -1122,10 +1211,21 @@ Return ONLY the regenerated week in the same JSON format with weekNumber, dateRa
 
                   {/* Action Bar */}
                   {!showSampleData && (
-                    <div className="flex items-center gap-3 mb-6">
-                      <Button variant="outline" size="sm" onClick={handleRegenerateFull} disabled={loading} className="h-8 bg-white/50 backdrop-blur-sm border-white/30">
-                        <FiRefreshCw className="h-3.5 w-3.5 mr-1.5" />Regenerate Full Month
-                      </Button>
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-3">
+                        <Button variant="outline" size="sm" onClick={handleRegenerateFull} disabled={loading} className="h-8 bg-white/50 backdrop-blur-sm border-white/30">
+                          <FiRefreshCw className="h-3.5 w-3.5 mr-1.5" />Regenerate Full Month
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={handleClearCalendar} className="h-8 bg-white/50 backdrop-blur-sm border-white/30 text-destructive hover:text-destructive hover:bg-red-50/50">
+                          <FiXCircle className="h-3.5 w-3.5 mr-1.5" />Clear Calendar
+                        </Button>
+                      </div>
+                      {lastSavedAt && (
+                        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                          <FiSave className="h-3 w-3" />
+                          <span>Saved locally {new Date(lastSavedAt).toLocaleString('bg-BG', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                      )}
                     </div>
                   )}
 
