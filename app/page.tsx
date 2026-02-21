@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect, useRef } from 'react'
 import { callAIAgent, type AIAgentResponse } from '@/lib/aiAgent'
 import { copyToClipboard } from '@/lib/clipboard'
 import { cn } from '@/lib/utils'
@@ -644,16 +644,54 @@ function AgentStatus({ isActive }: { isActive: boolean }) {
   )
 }
 
+// ─── LocalStorage Helpers ────────────────────────────────────────────
+const STORAGE_KEY = 'therma_calendar_form_state'
+
+interface FormState {
+  selectedMonth: string
+  selectedYear: number
+  targetMarket: string
+  primaryGoal: string
+  heroOffer: string
+  postingFrequency: number
+  promotions: Promotion[]
+}
+
+function loadFormState(): Partial<FormState> {
+  if (typeof window === 'undefined') return {}
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return {}
+    return JSON.parse(raw)
+  } catch {
+    return {}
+  }
+}
+
+function saveFormState(state: FormState) {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+  } catch {
+    // Storage full or unavailable -- silently ignore
+  }
+}
+
 // ─── Main Page Component ────────────────────────────────────────────
 export default function Page() {
-  // Form state
-  const [selectedMonth, setSelectedMonth] = useState('March')
-  const [selectedYear, setSelectedYear] = useState(2026)
-  const [targetMarket, setTargetMarket] = useState('Both')
-  const [primaryGoal, setPrimaryGoal] = useState('Bookings')
-  const [heroOffer, setHeroOffer] = useState('')
-  const [postingFrequency, setPostingFrequency] = useState(5)
-  const [promotions, setPromotions] = useState<Promotion[]>([])
+  // Load persisted state once on mount
+  const initialState = useRef<Partial<FormState>>(loadFormState())
+
+  // Form state -- initialized from localStorage if available
+  const [selectedMonth, setSelectedMonth] = useState(initialState.current.selectedMonth ?? 'March')
+  const [selectedYear, setSelectedYear] = useState(initialState.current.selectedYear ?? 2026)
+  const [targetMarket, setTargetMarket] = useState(initialState.current.targetMarket ?? 'Both')
+  const [primaryGoal, setPrimaryGoal] = useState(initialState.current.primaryGoal ?? 'Bookings')
+  const [heroOffer, setHeroOffer] = useState(initialState.current.heroOffer ?? '')
+  const [postingFrequency, setPostingFrequency] = useState(initialState.current.postingFrequency ?? 5)
+  const [promotions, setPromotions] = useState<Promotion[]>(
+    Array.isArray(initialState.current.promotions) ? initialState.current.promotions : []
+  )
 
   // App state
   const [calendarData, setCalendarData] = useState<CalendarData | null>(null)
@@ -662,6 +700,19 @@ export default function Page() {
   const [regeneratingWeek, setRegeneratingWeek] = useState<number | null>(null)
   const [showSampleData, setShowSampleData] = useState(false)
   const [activeAgentId, setActiveAgentId] = useState<string | null>(null)
+
+  // Persist form state to localStorage on every change
+  useEffect(() => {
+    saveFormState({
+      selectedMonth,
+      selectedYear,
+      targetMarket,
+      primaryGoal,
+      heroOffer,
+      postingFrequency,
+      promotions,
+    })
+  }, [selectedMonth, selectedYear, targetMarket, primaryGoal, heroOffer, postingFrequency, promotions])
 
   // Promotion management
   const addPromotion = () => {
