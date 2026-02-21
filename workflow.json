@@ -1,0 +1,11 @@
+{
+  "nodes": [
+    {"id": "input_node", "type": "Input", "label": "User Configuration", "nodeCategory": "input"},
+    {"id": "calendar_agent", "type": "Agent", "label": "Content Calendar Strategist Agent", "nodeCategory": "agent"},
+    {"id": "output_node", "type": "Output", "label": "Calendar Output", "nodeCategory": "end"}
+  ],
+  "edges": [
+    {"source": "input_node", "target": "calendar_agent"},
+    {"source": "calendar_agent", "target": "output_node"}
+  ]
+}

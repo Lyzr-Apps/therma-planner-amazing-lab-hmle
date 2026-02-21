@@ -1,0 +1,100 @@
+{
+  "agent_name": "Content Calendar Strategist Agent",
+  "agent_id": "699a199d4274f089c16d42b3",
+  "description": "Generates a full monthly Facebook content calendar for Therma Village Spa & Sport. Enforces calendar date accuracy, promotion-to-date mapping, 3-post promotion sequencing (announcement, reminder, urgency), objective tagging per post, CTA structure rules, hero offer weighting (30%+), cultural holiday validation for Bulgaria/Romania, and content pillar rotation subordinate to business logic. Outputs structured post cards with day, date, pillar, objective tag, format, time, caption (mixed tone: luxurious/conversational/wellness), CTA type, visual concept, hashtags, ad suggestion, and remarketing tags. Also generates a monthly summary dashboard.",
+  "agent_type": "json",
+  "accessor": "result",
+  "auto_generated": true,
+  "response_schema": {
+    "summary": {
+      "month": "string",
+      "year": "number",
+      "totalPosts": "number",
+      "promotionalPosts": "number",
+      "conversionPosts": "number",
+      "awarenessConversionRatio": "string",
+      "formatDistribution": {
+        "Image": "number",
+        "Carousel": "number",
+        "Reel": "number",
+        "Story": "number"
+      },
+      "offerSupportPercentage": "number"
+    },
+    "weeks": [
+      {
+        "weekNumber": "number",
+        "dateRange": "string",
+        "posts": [
+          {
+            "day": "string",
+            "date": "string",
+            "pillar": "string",
+            "objectiveTag": "string",
+            "format": "string",
+            "suggestedTime": "string",
+            "caption": "string",
+            "ctaType": "string",
+            "visualConcept": "string",
+            "hashtags": [
+              "string"
+            ],
+            "suggestedAdUse": "string",
+            "remarketingTag": "string",
+            "culturalWarning": "string"
+          }
+        ]
+      }
+    ]
+  },
+  "example_response": {
+    "summary": {
+      "month": "sample string",
+      "year": 0,
+      "totalPosts": 0,
+      "promotionalPosts": 0,
+      "conversionPosts": 0,
+      "awarenessConversionRatio": "sample string",
+      "formatDistribution": {
+        "Image": 0,
+        "Carousel": 0,
+        "Reel": 0,
+        "Story": 0
+      },
+      "offerSupportPercentage": 0
+    },
+    "weeks": [
+      {
+        "weekNumber": 0,
+        "dateRange": "sample string",
+        "posts": [
+          {
+            "day": "sample string",
+            "date": "sample string",
+            "pillar": "sample string",
+            "objectiveTag": "sample string",
+            "format": "sample string",
+            "suggestedTime": "sample string",
+            "caption": "sample string",
+            "ctaType": "sample string",
+            "visualConcept": "sample string",
+            "hashtags": [
+              "sample string"
+            ],
+            "suggestedAdUse": "sample string",
+            "remarketingTag": "sample string",
+            "culturalWarning": "sample"
+          }
+        ]
+      }
+    ]
+  },
+  "has_module_outputs": true,
+  "module_outputs_example": {
+    "artifact_files": [
+      {
+        "file_url": "https://example.com/image.png"
+      }
+    ]
+  }
+}

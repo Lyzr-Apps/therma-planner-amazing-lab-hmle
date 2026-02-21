@@ -1,0 +1,47 @@
+{
+  "agent_name": "Content Calendar Strategist Agent",
+  "agent_id": "699a199d4274f089c16d42b3",
+  "agent_type": "json",
+  "accessor": "json",
+  "has_module_outputs": false,
+  "schema": {
+    "summary": {
+      "month": "string",
+      "year": "number",
+      "totalPosts": "number",
+      "promotionalPosts": "number",
+      "conversionPosts": "number",
+      "awarenessConversionRatio": "string",
+      "formatDistribution": {
+        "Image": "number",
+        "Carousel": "number",
+        "Reel": "number",
+        "Story": "number"
+      },
+      "offerSupportPercentage": "number"
+    },
+    "weeks": [
+      {
+        "weekNumber": "number",
+        "dateRange": "string",
+        "posts": [
+          {
+            "day": "string",
+            "date": "string",
+            "pillar": "string",
+            "objectiveTag": "string",
+            "format": "string",
+            "suggestedTime": "string",
+            "caption": "string",
+            "ctaType": "string",
+            "visualConcept": "string",
+            "hashtags": ["string"],
+            "suggestedAdUse": "string",
+            "remarketingTag": "string",
+            "culturalWarning": "string or null"
+          }
+        ]
+      }
+    ]
+  }
+}
